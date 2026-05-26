@@ -111,7 +111,11 @@
     // START SCANNER
     // =========================
 
-    const html5QrCode = new Html5Qrcode("reader");
+    const html5QrCode =
+
+      new Html5Qrcode(
+        "reader"
+      );
 
     startScanner();
 
@@ -120,42 +124,25 @@
     // =========================
 
     function startScanner(){
+
       html5QrCode.start(
-        { facingMode: "environment" },
+
         {
-          fps: 20, // 调整为折中的 20 帧，兼顾流畅度与暗光清晰度
-
-          // 【修复近距离问题】强制设定理想分辨率。
-          // 不设这个的话，很多手机会默认启用 480p 低清，导致必须拉得极近才能看清
-          videoConstraints: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-
-          // 【修复电脑扫码问题】重新锁定比例。
-          // 电脑摄像头必须锁定 1.0 或 1.33 左右，否则部分高宽比屏幕的画面会严重拉伸
-          aspectRatio: 1.333334,
-
-          // 保持较大的扫描框，用户体验更佳
-          qrbox: function(viewfinderWidth, viewfinderHeight){
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrSize = Math.floor(minEdge * 0.8); 
-            return { width: qrSize, height: qrSize };
-          },
-
-          disableFlip: false,
-          
-          experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
-          }
+          facingMode: "environment"
         },
+
+        {
+          fps: 10,
+
+          qrbox: 250
+        },
+
         onScanSuccess,
+
         onScanError
-      ).catch(err => {
-        console.error("相机启动失败，尝试降级无约束启动...", err);
-        // 如果上面严格的约束报错（有些老电脑不支持720p），则用基础模式启动
-        html5QrCode.start({ facingMode: "environment" }, { fps: 20 }, onScanSuccess, onScanError);
-      });
+
+      );
+
     }
 
     // =========================
@@ -163,42 +150,54 @@
     // =========================
 
     function onScanSuccess(decodedText){
-      // 【修复参数为空问题 1】在任何异步操作（如 stop()）之前，第一步必须立刻把解析出来的文本固化锁死。
-      const cleanedText = String(decodedText).replace(/^\uFEFF/, "").trim();
-      
-      console.log("扫码成功，解析到的文本为: ", cleanedText);
 
-      // 如果解析出来的文本是空的，直接拦截，不进行后续无意义的跳转
-      if (!cleanedText) {
-        console.warn("解析到的内容为空，忽略本次扫描");
-        return;
-      }
+      console.log(decodedText);
 
-      document.getElementById("statusMessage").className = "alert alert-success mt-3 text-center";
-      document.getElementById("statusMessage").innerText = "読取成功: " + cleanedText;
+      document.getElementById(
+        "statusMessage"
+      ).className =
 
-      // 准备好最终的跳转链接
-      const targetUrl = GAS_URL + "?page=pcDetail" + "&pc_number=" + encodeURIComponent(cleanedText);
+        "alert alert-success mt-3 text-center";
 
-      // 【修复参数为空问题 2】放弃等待复杂的 stop() 成功回调。
-      // 因为 stop() 关摄像头需要耗时，会延迟跳转或导致变量在内存中丢失。
-      try {
-        html5QrCode.stop(); // 异步发出停止指令，不阻塞后面的跳转
-      } catch(e) {
-        console.error("停止相机时出错", e);
-      }
+      document.getElementById(
+        "statusMessage"
+      ).innerText =
 
-      // 立刻执行跳转，确保参数安全送达
-      window.location.href = targetUrl;
+        "読取成功: " + decodedText;
+
+      // STOP CAMERA
+
+      html5QrCode.stop();
+
+      // REDIRECT
+
+      setTimeout(() => {
+
+        window.location.href =
+
+          GAS_URL
+
+          + "?page=pcDetail"
+
+          + "&pc_number="
+
+          + encodeURIComponent(
+              decodedText
+            );
+
+      }, 1000);
+
     }
 
     // =========================
     // ERROR
     // =========================
-    function onScanError(error){
-      // ignore realtime errors
-    }
 
+    function onScanError(error){
+
+      // ignore realtime errors
+
+    }
 
   </script>
 
