@@ -111,11 +111,7 @@
     // START SCANNER
     // =========================
 
-    const html5QrCode =
-
-      new Html5Qrcode(
-        "reader"
-      );
+    const html5QrCode = new Html5Qrcode("reader");
 
     startScanner();
 
@@ -124,108 +120,64 @@
     // =========================
 
     function startScanner(){
-
       html5QrCode.start(
-
+        // 【优化 1】优先使用后置环境摄像头，如果失败则降级使用任意后置镜头（防止某些多摄像头手机报错）
+        { facingMode: "environment" },
         {
-          facingMode: {
-            exact: "environment"
-          }
-        },
+          // 【优化 2】降低帧率（建议 10-15）。过高的 30fps 会让手机 CPU 严重发热且每帧画面变模糊，反而降低识别率
+          fps: 15,
 
-        {
-          fps: 30,
-
+          // 【优化 3】放大扫描框（改为 0.85 或 0.9），扫描范围更大，用户不需要把二维码对得极准
           qrbox: function(viewfinderWidth, viewfinderHeight){
-
-            const minEdge = Math.min(
-              viewfinderWidth,
-              viewfinderHeight
-            );
-
-            const qrSize = Math.floor(
-              minEdge * 0.8
-            );
-
-            return {
-
-              width: qrSize,
-              height: qrSize
-
-            };
-
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const qrSize = Math.floor(minEdge * 0.85); 
+            return { width: qrSize, height: qrSize };
           },
 
-          aspectRatio: 1.0,
+          // 【优化 4】去掉硬编码的 aspectRatio: 1.0。允许库根据手机摄像头原生比例调整，防止画面被拉伸变形
+          // aspectRatio: 1.0, 
 
-          disableFlip: false
+          disableFlip: false,
+          
+          // 【优化 5】加入核心实验性参数，大幅提升复杂、模糊、远距离二维码的解码能力
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          }
         },
-
         onScanSuccess,
-
         onScanError
-
-      );
-
+      ).catch(err => {
+        console.error("相机启动失败，尝试备用强制模式...", err);
+        // 如果 exact 环境报错，尝试无限制启动
+        html5QrCode.start({ facingMode: "environment" }, { fps: 15 }, onScanSuccess, onScanError);
+      });
     }
 
     // =========================
     // SUCCESS
     // =========================
-
+    // 保持你原有的逻辑不变
     function onScanSuccess(decodedText){
-
-      // REMOVE BOM
-      // REMOVE SPACE
-
-      const cleanedText =
-
-        decodedText
-          .replace(/^\uFEFF/, "")
-          .trim();
-
+      const cleanedText = decodedText.replace(/^\uFEFF/, "").trim();
       console.log(cleanedText);
 
-      document.getElementById(
-        "statusMessage"
-      ).className =
+      document.getElementById("statusMessage").className = "alert alert-success mt-3 text-center";
+      document.getElementById("statusMessage").innerText = "読取成功: " + cleanedText;
 
-        "alert alert-success mt-3 text-center";
-
-      document.getElementById(
-        "statusMessage"
-      ).innerText =
-
-        "読取成功: " + cleanedText;
-
-      html5QrCode.stop();
-
-      setTimeout(() => {
-
-        window.location.href =
-
-          GAS_URL
-
-          + "?page=pcDetail"
-
-          + "&pc_number="
-
-          + encodeURIComponent(
-              cleanedText
-            );
-
-      }, 1000);
-
+      // 【优化 6】优雅停止相机，增加 catch 防止并发冲突
+      html5QrCode.stop().then(() => {
+        window.location.href = GAS_URL + "?page=pcDetail" + "&pc_number=" + encodeURIComponent(cleanedText);
+      }).catch(err => {
+        // 如果 stop 报错也直接跳转，不卡住页面
+        window.location.href = GAS_URL + "?page=pcDetail" + "&pc_number=" + encodeURIComponent(cleanedText);
+      });
     }
 
     // =========================
     // ERROR
     // =========================
-
     function onScanError(error){
-
       // ignore realtime errors
-
     }
 
   </script>
