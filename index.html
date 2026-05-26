@@ -128,16 +128,37 @@
       html5QrCode.start(
 
         {
-          facingMode: "environment"
+          facingMode: {
+            exact: "environment"
+          }
         },
 
         {
-          fps: 20,
-          qrbox: {
-            width: 220,
-            height: 220
+          fps: 30,
+
+          qrbox: function(viewfinderWidth, viewfinderHeight){
+
+            const minEdge = Math.min(
+              viewfinderWidth,
+              viewfinderHeight
+            );
+
+            const qrSize = Math.floor(
+              minEdge * 0.8
+            );
+
+            return {
+
+              width: qrSize,
+              height: qrSize
+
+            };
+
           },
-          aspectRatio: 1.0
+
+          aspectRatio: 1.0,
+
+          disableFlip: false
         },
 
         onScanSuccess,
@@ -154,7 +175,16 @@
 
     function onScanSuccess(decodedText){
 
-      console.log(decodedText);
+      // REMOVE BOM
+      // REMOVE SPACE
+
+      const cleanedText =
+
+        decodedText
+          .replace(/^\uFEFF/, "")
+          .trim();
+
+      console.log(cleanedText);
 
       document.getElementById(
         "statusMessage"
@@ -166,13 +196,9 @@
         "statusMessage"
       ).innerText =
 
-        "読取成功: " + decodedText;
-
-      // STOP CAMERA
+        "読取成功: " + cleanedText;
 
       html5QrCode.stop();
-
-      // REDIRECT
 
       setTimeout(() => {
 
@@ -185,7 +211,7 @@
           + "&pc_number="
 
           + encodeURIComponent(
-              decodedText
+              cleanedText
             );
 
       }, 1000);
