@@ -2,42 +2,156 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>扫码测试</title>
-    <!-- 使用海外最稳定的 Cloudflare CDN -->
-    <script src="https://jsdelivr.net"></script>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; background: #f0f0f0; }
-        #scan-result { color: #007bff; word-break: break-all; }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: sans-serif;
+            text-align: center;
+            background: #f5f5f5;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #scan-result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #007bff;
+            word-break: break-all;
+        }
+
     </style>
 </head>
+
 <body>
 
-    <h2>扫码测试</h2>
+    <h2>二维码扫码测试</h2>
+
     <div id="reader"></div>
-    <p>扫描结果: <strong id="scan-result">等待扫码...</strong></p>
+
+    <div id="scan-result">
+        等待扫码...
+    </div>
 
     <script>
-        function onScanSuccess(decodedText, decodedResult) {
-            document.getElementById('scan-result').textContent = decodedText;
+
+        // =========================
+        // CONFIG
+        // =========================
+
+        const GAS_URL =
+        "https://script.google.com/macros/s/AKfycbxgp00JvxJWpSSTlrabL4Hqxe0j9Ue01Gexs4z2sRk/dev";
+
+        function onScanSuccess(decodedText) {
+
+            document.getElementById(
+                'scan-result'
+            ).innerHTML =
+                '扫描结果：<br><strong>' +
+                decodedText +
+                '</strong>';
+
+            console.log(decodedText);
+
+            
+            // REDIRECT
+            setTimeout(() => {
+
+                window.location.href =
+
+                GAS_URL
+
+                + "?page=pcDetail"
+
+                + "&pc_number="
+
+                + encodeURIComponent(
+                    decodedText
+                    );
+
+            }, 1000);
         }
 
         function onScanFailure(error) {
-            // 忽略频繁的扫描失败日志
         }
 
-        // 确保库加载后再初始化
-        window.addEventListener('DOMContentLoaded', () => {
-            if (typeof Html5QrcodeScanner !== 'undefined') {
-                let html5QrcodeScanner = new Html5QrcodeScanner(
-                    "reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false
+        window.addEventListener(
+            'load',
+            () => {
+
+                const scanner =
+                    new Html5QrcodeScanner(
+                        "reader",
+                        {
+
+                            fps: 15,
+
+                            // 重点：扩大识别区域
+                            qrbox: function(
+                                viewfinderWidth,
+                                viewfinderHeight
+                            ) {
+
+                                let minEdge =
+                                    Math.min(
+                                        viewfinderWidth,
+                                        viewfinderHeight
+                                    );
+
+                                let qrSize =
+                                    Math.floor(
+                                        minEdge * 0.8
+                                    );
+
+                                return {
+                                    width: qrSize,
+                                    height: qrSize
+                                };
+                            },
+
+                            rememberLastUsedCamera: true,
+
+                            showTorchButtonIfSupported: true,
+
+                            showZoomSliderIfSupported: true,
+
+                            supportedScanTypes: [
+                                Html5QrcodeScanType
+                                    .SCAN_TYPE_CAMERA
+                            ]
+                        },
+                        false
+                    );
+
+                scanner.render(
+                    onScanSuccess,
+                    onScanFailure
                 );
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-            } else {
-                document.getElementById('scan-result').textContent = "错误：扫码库加载失败，请检查网络或更换CDN！";
             }
-        });
+        );
+
     </script>
+
 </body>
 </html>
