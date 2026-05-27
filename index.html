@@ -1,17 +1,54 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信式扫码测试</title>
+    <!-- 1. 引入正确的 HTML5 QR Code 扫描库 CDN -->
+    <script src="https://unpkg.com" type="text/javascript"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        /* 扫码框容器 */
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; background: #f0f0f0; }
+        #scan-result { color: #007bff; word-break: break-all; }
+    </style>
+</head>
 <body>
-    <video id="webcam-video" style="width:100%; max-width:500px;"></video>
-    <p>结果: <strong id="scan-result">等待扫码...</strong></p>
-    <script type="module">
-        import QrScanner from 'https://cloudflare.com/';
-        const videoElem = document.getElementById('webcam-video');
-        const resultElem = document.getElementById('scan-result');
-        const scanner = new QrScanner(videoElem, result => resultElem.textContent = result.data, {
-            highlightScanRegion: true,
-            highlightCodeOutline: true,
-        });
-        scanner.start();
+
+    <h2>扫码测试</h2>
+    <!-- 2. 库会自动在这个容器里生成 video 标签和扫描动画 -->
+    <div id="reader"></div>
+    
+    <p>扫描结果: <strong id="scan-result">等待扫码...</strong></p>
+
+    <script>
+        // 当页面加载完成后执行
+        function onScanSuccess(decodedText, decodedResult) {
+            // 扫码成功后的回调
+            document.getElementById('scan-result').textContent = decodedText;
+            
+            // 如果扫出来的是网址，可以激活下面这行自动跳转
+            // window.location.href = decodedText; 
+        }
+
+        function onScanFailure(error) {
+            // 频繁的扫描失败（比如没对准）会走到这里，通常保持安静即可，不用弹窗
+            // console.warn(`Code scan error = ${error}`);
+        }
+
+        // 初始化扫码器（"reader" 是上面 div 的 id）
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10,           // 每秒帧数
+                qrbox: { width: 250, height: 250 }, // 扫码框大小
+                rememberLastUsedCamera: true // 记住上一次使用的摄像头（常用于手机后置）
+            },
+            /* verbose= */ false
+        );
+        
+        // 启动摄像头
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     </script>
 </body>
 </html>
