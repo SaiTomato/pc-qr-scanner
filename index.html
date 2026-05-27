@@ -7,7 +7,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>扫码测试</title>
+    <title>QR Scan</title>
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -46,12 +46,12 @@
 
 <body>
 
-    <h2>二维码扫码测试</h2>
+    <h2>PC QRCode Scan</h2>
 
     <div id="reader"></div>
 
     <div id="scan-result">
-        等待扫码...
+        Waitting...
     </div>
 
     <script>
@@ -68,7 +68,7 @@
             document.getElementById(
                 'scan-result'
             ).innerHTML =
-                '扫描结果：<br><strong>' +
+                'Result：<br><strong>' +
                 decodedText +
                 '</strong>';
 
@@ -107,7 +107,7 @@
 
                             fps: 15,
 
-                            // 重点：扩大识别区域
+                            // box's size up
                             qrbox: function(
                                 viewfinderWidth,
                                 viewfinderHeight
