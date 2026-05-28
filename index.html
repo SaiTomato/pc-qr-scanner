@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -141,6 +141,273 @@
                                     .SCAN_TYPE_CAMERA
                             ]
                         },
+                        false
+                    );
+
+                scanner.render(
+                    onScanSuccess,
+                    onScanFailure
+                );
+            }
+        );
+
+    </script>
+
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>QR Scan</title>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: sans-serif;
+            text-align: center;
+            background: #f5f5f5;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #scan-result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #007bff;
+            word-break: break-all;
+        }
+
+        .manual-input-area {
+            margin-top: 30px;
+        }
+
+        .manual-input-area input {
+            width: 240px;
+            max-width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .manual-input-area button {
+            margin-left: 10px;
+            padding: 12px 18px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .manual-input-area button:hover {
+            opacity: 0.9;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <h2>PC QRCode Scan</h2>
+
+    <div id="reader"></div>
+
+    <div id="scan-result">
+        Waiting...
+    </div>
+
+    <!-- Manual Input -->
+
+    <div class="manual-input-area">
+
+        <h3>
+            Manual Input
+        </h3>
+
+        <input
+            type="text"
+            id="pc-number-input"
+            placeholder="Input PC Number"
+        >
+
+        <button onclick="movePcDetailPage()">
+            Move
+        </button>
+
+    </div>
+
+    <script>
+
+        // =========================
+        // CONFIG
+        // =========================
+
+        const GAS_URL =
+            "https://script.google.com/macros/s/AKfycbxgp00JvxJWpSSTlrabL4Hqxe0j9Ue01Gexs4z2sRk/dev";
+
+        // =========================
+        // MOVE PAGE
+        // =========================
+
+        function redirectToPcDetail(pcNumber) {
+
+            if (!pcNumber) {
+
+                alert("Please input PC Number");
+
+                return;
+            }
+
+            window.location.href =
+
+                GAS_URL
+
+                + "?page=pcDetail"
+
+                + "&pc_number="
+
+                + encodeURIComponent(pcNumber);
+        }
+
+        // =========================
+        // QR SUCCESS
+        // =========================
+
+        function onScanSuccess(decodedText) {
+
+            document.getElementById(
+                'scan-result'
+            ).innerHTML =
+
+                'Result：<br><strong>'
+                + decodedText +
+                '</strong>';
+
+            console.log(decodedText);
+
+            setTimeout(() => {
+
+                redirectToPcDetail(
+                    decodedText
+                );
+
+            }, 1000);
+        }
+
+        function onScanFailure(error) {
+        }
+
+        // =========================
+        // MANUAL INPUT
+        // =========================
+
+        function movePcDetailPage() {
+
+            const pcNumber =
+
+                document.getElementById(
+                    "pc-number-input"
+                ).value.trim();
+
+            redirectToPcDetail(
+                pcNumber
+            );
+        }
+
+        // ENTER KEY SUPPORT
+
+        document.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (event.key === "Enter") {
+
+                    movePcDetailPage();
+                }
+            }
+        );
+
+        // =========================
+        // START SCANNER
+        // =========================
+
+        window.addEventListener(
+            'load',
+            () => {
+
+                const scanner =
+
+                    new Html5QrcodeScanner(
+
+                        "reader",
+
+                        {
+
+                            fps: 15,
+
+                            qrbox: function(
+                                viewfinderWidth,
+                                viewfinderHeight
+                            ) {
+
+                                let minEdge =
+
+                                    Math.min(
+                                        viewfinderWidth,
+                                        viewfinderHeight
+                                    );
+
+                                let qrSize =
+
+                                    Math.floor(
+                                        minEdge * 0.8
+                                    );
+
+                                return {
+
+                                    width: qrSize,
+                                    height: qrSize
+                                };
+                            },
+
+                            rememberLastUsedCamera: true,
+
+                            showTorchButtonIfSupported: true,
+
+                            showZoomSliderIfSupported: true,
+
+                            supportedScanTypes: [
+
+                                Html5QrcodeScanType
+                                    .SCAN_TYPE_CAMERA
+                            ]
+                        },
+
                         false
                     );
 
